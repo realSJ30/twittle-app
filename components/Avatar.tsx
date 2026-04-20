@@ -7,43 +7,46 @@ interface IAvatar {
   userId: string;
   isLarge?: boolean;
   hasBorder?: boolean;
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
-const Avatar: React.FC<IAvatar> = ({ userId, isLarge, hasBorder }) => {
+const SIZE_MAP = {
+  sm: "h-9 w-9",
+  md: "h-11 w-11",
+  lg: "h-14 w-14",
+  xl: "h-32 w-32",
+};
+
+const Avatar: React.FC<IAvatar> = ({ userId, isLarge, hasBorder, size }) => {
   const { data: fetchedUser } = useUser(userId);
   const router = useRouter();
 
-  const onClick = useCallback(
-    (event: any) => {
-      event.stopPropagation(); // overides parent onclick
+  const resolvedSize = size ?? (isLarge ? "xl" : "md");
 
-      const url = `/users/${userId}`;
-      router.push(url);
+  const onClick = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      router.push(`/users/${userId}`);
     },
     [router, userId]
   );
 
   return (
     <div
+      onClick={onClick}
       className={`
-        ${hasBorder ? "border-4 border-black" : ""} 
-        ${isLarge ? "h-32" : "h-12"}
-        ${isLarge ? "w-32" : "w-12"}
-        rounded-full
-        hover:opacity-90
-        transition
-        cursor-pointer
-        relative
-        `}
+        relative shrink-0 overflow-hidden rounded-full
+        bg-surface-subtle
+        ${SIZE_MAP[resolvedSize]}
+        ${hasBorder ? "ring-4 ring-surface" : ""}
+        cursor-pointer transition hover:opacity-90
+      `}
     >
       <Image
         fill
-        style={{
-          objectFit: "cover",
-          borderRadius: "100%",
-        }}
+        sizes="128px"
+        style={{ objectFit: "cover" }}
         alt="Avatar"
-        onClick={onClick}
         src={fetchedUser?.profileImage || "/images/placeholder.png"}
       />
     </div>

@@ -4,7 +4,7 @@ import useFollow from "@/hooks/useFollow";
 import useUser from "@/hooks/useUser";
 import { format } from "date-fns";
 import React, { useMemo } from "react";
-import { BiCalendar } from "react-icons/bi";
+import { HiOutlineCalendarDays } from "react-icons/hi2";
 import Button from "../Button";
 
 interface IUserBio {
@@ -18,59 +18,60 @@ const UserBio: React.FC<IUserBio> = ({ userId }) => {
   const editModal = useEditModal();
   const { isFollowing, toggleFollow } = useFollow(userId);
 
-  const createdAt = useMemo(() => {
-    if (!fetchedUser?.createdAt) {
-      return null;
-    }
-    return format(new Date(fetchedUser.createdAt), "MMMM yyyy");
-  }, [fetchedUser?.createdAt]);
+  const createdAt = useMemo(
+    () =>
+      fetchedUser?.createdAt
+        ? format(new Date(fetchedUser.createdAt), "MMMM yyyy")
+        : null,
+    [fetchedUser?.createdAt]
+  );
 
   return (
-    <div className="border-b border-neutral-800 pb-4">
-      <div className="flex justify-end p-2">
+    <section className="border-b border-line pb-6">
+      <div className="flex justify-end px-4 py-3 sm:px-6">
         {currentUser?.id === userId ? (
-          <Button
-            secondary
-            label="Edit"
-            onClick={() => {
-              editModal.onOpen();
-            }}
-          />
+          <Button label="Edit profile" outline onClick={() => editModal.onOpen()} />
         ) : (
           <Button
             onClick={toggleFollow}
-            label={isFollowing ? "Unfollow" : "Follow"}
-            secondary={!isFollowing}
+            label={isFollowing ? "Following" : "Follow"}
             outline={isFollowing}
           />
         )}
       </div>
-      <div className="mt-8 px-4">
-        <div className="flex flex-col">
-          <p className="text-white text-2xl font-semibold">
-            {fetchedUser?.name}
+      <div className="mt-10 px-4 sm:px-6">
+        <h1 className="font-display text-2xl font-bold text-ink">
+          {fetchedUser?.name}
+        </h1>
+        <p className="text-[14px] text-ink-soft">@{fetchedUser?.username}</p>
+
+        {fetchedUser?.bio && (
+          <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink">
+            {fetchedUser.bio}
           </p>
-          <p className="text-md text-neutral-500">@{fetchedUser?.username}</p>
+        )}
+
+        <div className="mt-4 flex items-center gap-2 text-[14px] text-ink-soft">
+          <HiOutlineCalendarDays size={18} />
+          <span>Joined {createdAt}</span>
         </div>
-        <div className="flex flex-col mt-4">
-          <p className="text-white">{fetchedUser?.bio}</p>
-          <div className="flex flex-row items-center gap-2 mt-4 text-neutral-500">
-            <BiCalendar size={24} />
-            <p>Joined {createdAt}</p>
+
+        <div className="mt-4 flex items-center gap-6 text-[14px]">
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-ink">
+              {fetchedUser?.followingIds?.length || 0}
+            </span>
+            <span className="text-ink-soft">Following</span>
           </div>
-        </div>
-        <div className="flex flex-row items-center mt-4 gap-6">
-          <div className="flex flex-row items-center gap-1">
-            <p className="text-white">{fetchedUser?.followingIds?.length}</p>
-            <p className="text-neutral-500">Following</p>
-          </div>
-          <div className="flex flex-row items-center gap-1">
-            <p className="text-white">{fetchedUser?.followersCount || 0}</p>
-            <p className="text-neutral-500">Followers</p>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-ink">
+              {fetchedUser?.followersCount || 0}
+            </span>
+            <span className="text-ink-soft">Followers</span>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

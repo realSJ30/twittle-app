@@ -3,7 +3,6 @@ import useLoginModal from "@/hooks/useLoginModal";
 import { ISideBarItem } from "@/interfaces/sidebar.interface";
 import { useRouter } from "next/router";
 import React, { useCallback } from "react";
-import { BsDot } from "react-icons/bs";
 
 const SidebarItem: React.FC<ISideBarItem> = ({
   href,
@@ -16,32 +15,46 @@ const SidebarItem: React.FC<ISideBarItem> = ({
   const loginModal = useLoginModal();
   const { data: currentUser } = useCurrentUser();
   const router = useRouter();
+
+  const isActive = href ? router.asPath === href : false;
+
   const handleClick = useCallback(() => {
     if (onClick) return onClick();
-
-    if (auth && !currentUser) {
-      loginModal.onOpen();
-    } else if (href) {
-      router.push(href);
-    }
-  }, [router, href, currentUser, auth, loginModal]);
+    if (auth && !currentUser) return loginModal.onOpen();
+    if (href) router.push(href);
+  }, [onClick, auth, currentUser, loginModal, href, router]);
 
   return (
-    <div onClick={handleClick} className="flex flex-row items-center">
-      <div className="relative rounded-full h-14 w-14 flex items-center justify-center p-4 hover:bg-slate-300 hover:bg-opacity-10 cursor-pointer lg:hidden">
-        <Icon size={28} color="white" />
-        {alert ? (
-          <BsDot className="text-sky-500 absolute -top-4 left-0" size={70} />
-        ) : null}
-      </div>
-      <div className="relative hidden lg:flex items-center gap-4 p-4 rounded-full hover:bg-slate-300 hover:bg-opacity-10 cursor-pointer">
-        <Icon size={28} color="white" />
-        <p className="hidden lg:block text-white text-xl">{label}</p>
-        {alert ? (
-          <BsDot className="text-sky-500 absolute -top-4 left-0" size={70} />
-        ) : null}
-      </div>
-    </div>
+    <button
+      onClick={handleClick}
+      className={`
+        group relative flex items-center gap-3
+        rounded-2xl px-3 py-3
+        transition
+        hover:bg-surface-subtle
+        ${isActive ? "bg-brand-soft" : ""}
+      `}
+    >
+      <span className="relative flex h-10 w-10 items-center justify-center">
+        <Icon
+          size={24}
+          className={`transition ${
+            isActive ? "text-brand-700 dark:text-brand-500" : "text-ink group-hover:text-ink"
+          }`}
+        />
+        {alert && (
+          <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-accent-rose ring-2 ring-surface" />
+        )}
+      </span>
+      <span
+        className={`
+          hidden xl:inline-block text-[15px]
+          ${isActive ? "font-semibold text-brand-700 dark:text-brand-500" : "font-medium text-ink"}
+        `}
+      >
+        {label}
+      </span>
+    </button>
   );
 };
 

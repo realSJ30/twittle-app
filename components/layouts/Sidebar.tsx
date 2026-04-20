@@ -1,68 +1,78 @@
 import { ISideBarItem } from "@/interfaces/sidebar.interface";
 import React from "react";
-import { BsBellFill, BsHouseFill } from "react-icons/bs";
+import { HiOutlineHome, HiOutlineBell, HiOutlineUser } from "react-icons/hi2";
+import { HiOutlineSparkles } from "react-icons/hi";
 import { BiLogOut } from "react-icons/bi";
-import { FaUser } from "react-icons/fa";
 import SidebarItem from "./SidebarItem";
 import SidebarLogo from "./SidebarLogo";
 import SidebarTweetButton from "./SidebarTweetButton";
+import ThemeToggle from "../ThemeToggle";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { signOut } from "next-auth/react";
 
 const Sidebar = () => {
   const { data: currentUser } = useCurrentUser();
+
   const items: ISideBarItem[] = [
-    {
-      label: "Home",
-      href: "/",
-      icon: BsHouseFill,
-    },
+    { label: "Home", href: "/", icon: HiOutlineHome },
     {
       label: "Notifications",
       href: "/notifications",
-      icon: BsBellFill,
+      icon: HiOutlineBell,
       auth: true,
       alert: currentUser?.hasNotification,
     },
     {
       label: "Profile",
       href: `/users/${currentUser?.id}`,
-      icon: FaUser,
+      icon: HiOutlineUser,
       auth: true,
     },
   ];
+
   return (
-    <div className="col-span-1 h-full pr-4 md:pr-6">
-      <div className="flex flex-col items-end">
-        <div className="space-y-2 lg:w-[230px]">
-          <SidebarLogo />
-          {items.map((item: ISideBarItem, index: number) => {
-            const { href, icon, label, onClick, auth, alert } = item;
-            return (
-              <SidebarItem
-                key={index}
-                href={href}
-                icon={icon}
-                label={label}
-                onClick={onClick}
-                auth={auth}
-                alert={alert}
-              />
-            );
-          })}
-          {currentUser && (
-            <SidebarItem
-              onClick={() => {
-                signOut();
-              }}
-              icon={BiLogOut}
-              label={"Logout"}
-            />
-          )}
+    <aside
+      className="
+        hidden md:flex
+        sticky top-0 h-screen
+        w-[84px] xl:w-[260px]
+        shrink-0
+        flex-col justify-between
+        px-3 xl:px-5 py-5
+      "
+    >
+      <div className="flex flex-col gap-1">
+        <SidebarLogo />
+        <nav className="mt-6 flex flex-col gap-1">
+          {items.map((item, index) => (
+            <SidebarItem key={index} {...item} />
+          ))}
+        </nav>
+        <div className="mt-4">
           <SidebarTweetButton />
         </div>
       </div>
-    </div>
+
+      <div className="flex flex-col gap-1">
+        <div className="hidden xl:flex items-center gap-2 rounded-2xl border border-line bg-brand-soft px-3 py-3">
+          <HiOutlineSparkles className="text-brand-700 shrink-0 dark:text-brand-500" size={20} />
+          <p className="text-[13px] leading-snug text-ink-muted">
+            Welcome to Twittle — a calmer place to share what&apos;s on your
+            mind.
+          </p>
+        </div>
+        <div className="mt-3 hidden md:flex xl:hidden">
+          <ThemeToggle />
+        </div>
+        {currentUser && (
+          <SidebarItem
+            onClick={() => signOut()}
+            icon={BiLogOut}
+            label="Log out"
+          />
+        )}
+      </div>
+    </aside>
   );
 };
 

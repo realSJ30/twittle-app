@@ -4,10 +4,12 @@ import usePost from "@/hooks/usePost";
 import usePosts from "@/hooks/usePosts";
 import useRegisterModal from "@/hooks/useRegisterModal";
 import axios from "axios";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { HiOutlineFaceSmile, HiOutlinePhoto } from "react-icons/hi2";
 import Avatar from "./Avatar";
 import Button from "./Button";
+import Logo from "./Logo";
 
 interface IForm {
   placeholder: string;
@@ -15,78 +17,124 @@ interface IForm {
   postId?: string;
 }
 
+const MAX_LENGTH = 280;
+
 const Form: React.FC<IForm> = ({ placeholder, isComment, postId }) => {
   const registerModal = useRegisterModal();
   const loginModal = useLoginModal();
   const { data: currentUser } = useCurrentUser();
   const { mutate: mutatePosts } = usePosts();
-
   const { mutate: mutatePost } = usePost(postId as string);
 
   const [body, setBody] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const remaining = useMemo(() => MAX_LENGTH - body.length, [body]);
+  const tooLong = remaining < 0;
+
   const onSubmit = useCallback(async () => {
     try {
       setIsLoading(true);
-
       const url = isComment ? `/api/comments?postId=${postId}` : "/api/posts";
-
-      await axios.post(url, {
-        body,
-      });
-
-      toast.success("Twitt posted!");
+      await axios.post(url, { body });
+      toast.success(isComment ? "Reply sent" : "Post published");
       setBody("");
       mutatePosts();
       mutatePost();
-    } catch (error) {
-      toast.error("Something went wrong!");
+    } catch {
+      toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
     }
-  }, [body, mutatePosts, isComment, postId]);
+  }, [body, isComment, postId, mutatePosts, mutatePost]);
+
+  if (!currentUser) {
+    return (
+      <div className="border-b border-line px-5 py-10 sm:px-8">
+        <div className="mx-auto flex max-w-md flex-col items-center text-center">
+          <Logo size={44} />
+          <h2 className="mt-4 font-display text-2xl font-bold text-ink">
+            Join the conversation
+          </h2>
+          <p className="mt-1 text-[15px] text-ink-muted">
+            Share a thought, reply to a friend, or just lurk. Twittle is a
+            lighter, calmer take on the social feed.
+          </p>
+          <div className="mt-6 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Button
+              label="Log in"
+              onClick={() => loginModal.onOpen()}
+              large
+            />
+            <Button
+              label="Create account"
+              onClick={() => registerModal.onOpen()}
+              large
+              outline
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="border-b border-neutral-800 px-5 py-2">
-      {currentUser ? (
-        <div className="flex flex-row gap-4">
-          <div className="">
-            <Avatar userId={currentUser?.id} />
-          </div>
-          <div className="w-full">
-            <textarea
-              disabled={isLoading}
-              onChange={(e) => setBody(e.target.value)}
-              value={body}
-              className="disabled:opacity-80 peer resize-none mt-3 w-full bg-black ring-0 outline-none text-[20px] placeholder-neutral-500 text-white"
-              placeholder={placeholder}
-            ></textarea>
-            <hr className="opacity-0 peer-focus:opacity-100 h-[1px] w-full border-neutral-800 transition" />
-            <div className="mt-4 flex flex-row justify-end">
+    <div className="border-b border-line px-4 py-4 sm:px-6">
+      <div className="flex gap-3">
+        <div className="pt-1">
+          <Avatar userId={currentUser?.id} />
+        </div>
+        <div className="flex-1">
+          <textarea
+            disabled={isLoading}
+            onChange={(e) => setBody(e.target.value)}
+            value={body}
+            rows={isComment ? 2 : 3}
+            className="
+              peer w-full resize-none bg-transparent
+              text-[17px] leading-snug text-ink placeholder-ink-faint
+              outline-none disabled:opacity-70
+            "
+            placeholder={placeholder}
+          />
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center gap-1 text-ink-soft">
+              <button
+                type="button"
+                className="rounded-full p-2 transition hover:bg-brand-soft hover:text-brand-700 dark:hover:text-brand-500"
+                aria-label="Attach image"
+              >
+                <HiOutlinePhoto size={18} />
+              </button>
+              <button
+                type="button"
+                className="rounded-full p-2 transition hover:bg-brand-soft hover:text-brand-700 dark:hover:text-brand-500"
+                aria-label="Add emoji"
+              >
+                <HiOutlineFaceSmile size={18} />
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-xs tabular-nums ${
+                  tooLong
+                    ? "text-accent-rose font-semibold"
+                    : remaining < 40
+                    ? "text-accent-amber"
+                    : "text-ink-faint"
+                }`}
+              >
+                {remaining}
+              </span>
               <Button
-                label="Twitt"
+                label={isComment ? "Reply" : "Post"}
                 onClick={onSubmit}
-                disabled={isLoading || !body}
+                disabled={isLoading || !body || tooLong}
               />
             </div>
           </div>
         </div>
-      ) : (
-        <div className="py-8">
-          <h1 className="text-white text-2xl text-center mb-4 font-bold">
-            Welcome to Twittle
-          </h1>
-          <div className="flex flex-row items-center justify-center gap-4">
-            <Button label="Login" onClick={() => loginModal.onOpen()} />
-            <Button
-              label="Register"
-              onClick={() => registerModal.onOpen()}
-              secondary
-            />
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

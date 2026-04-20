@@ -51,7 +51,7 @@ const ImageUpload: React.FC<IImageUpload> = ({
     <div
       {...getRootProps({
         className:
-          "w-full p-4 text-white text-center border-2 border-dotted rounded-md border-neutral-700",
+          "w-full rounded-2xl border-2 border-dotted border-line-strong bg-surface-subtle p-4 text-center text-ink transition hover:border-brand-400",
       })}
     >
       <input {...getInputProps()} />
@@ -60,7 +60,7 @@ const ImageUpload: React.FC<IImageUpload> = ({
           <Image src={base64} height="100" width="100" alt="Uploaded image" />
         </div>
       ) : (
-        <p className="text-white">{label}</p>
+        <p className="text-ink">{label}</p>
       )}
     </div>
   );

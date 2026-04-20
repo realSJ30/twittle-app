@@ -22,7 +22,13 @@ const Input: React.FC<IInput> = ({
       value={value}
       placeholder={placeholder}
       type={type}
-      className="w-full p-4 text-lg bg-black border-2 border-neutral-800 rounded-md outline-none text-white focus:border-sky-500 focus:border-2 transition disabled:bg-neutral-900 disabled:opacity-70 disabled:cursor-not-allowed"
+      className="
+        w-full rounded-2xl border border-line bg-surface
+        px-4 py-3 text-[15px] text-ink placeholder-ink-faint
+        outline-none transition
+        focus:border-brand-400 focus:ring-4 focus:ring-brand-100/70
+        disabled:bg-surface-subtle disabled:opacity-70
+      "
     />
   );
 };

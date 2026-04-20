@@ -4,7 +4,13 @@ import useLoginModal from "@/hooks/useLoginModal";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useRouter } from "next/router";
 import React, { useCallback, useMemo } from "react";
-import { AiFillHeart, AiOutlineHeart, AiOutlineMessage } from "react-icons/ai";
+import {
+  HiOutlineArrowPathRoundedSquare,
+  HiOutlineChatBubbleOvalLeft,
+  HiOutlineHeart,
+  HiOutlinePaperAirplane,
+} from "react-icons/hi2";
+import { HiHeart } from "react-icons/hi";
 import Avatar from "../Avatar";
 
 interface IPostItem {
@@ -12,15 +18,21 @@ interface IPostItem {
   userId?: string;
 }
 
+const formatCount = (n: number) => {
+  if (!n) return "";
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) return (n / 1000).toFixed(n < 10_000 ? 1 : 0) + "k";
+  return (n / 1_000_000).toFixed(1) + "m";
+};
+
 const PostItem: React.FC<IPostItem> = ({ data, userId }) => {
   const router = useRouter();
   const loginModal = useLoginModal();
-
   const { data: currentUser } = useCurrentUser();
   const { hasLiked, toggleLike } = useLike({ postId: data.id, userId });
 
   const goToUser = useCallback(
-    (e: any) => {
+    (e: React.MouseEvent) => {
       e.stopPropagation();
       router.push(`/users/${data.user.id}`);
     },
@@ -29,71 +41,130 @@ const PostItem: React.FC<IPostItem> = ({ data, userId }) => {
 
   const goToPost = useCallback(() => {
     router.push(`/posts/${data.id}`);
-  }, [router, data.user.id]);
+  }, [router, data.id]);
 
   const onLike = useCallback(
-    async (ev: any) => {
-      ev.stopPropagation();
-
-      if (!currentUser) {
-        return loginModal.onOpen();
-      }
-
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!currentUser) return loginModal.onOpen();
       toggleLike();
     },
-    [loginModal, currentUser, toggleLike]
+    [currentUser, loginModal, toggleLike]
   );
 
-  const createdAt = useMemo(() => {
-    if (!data?.createdAt) {
-      return null;
-    }
+  const createdAt = useMemo(
+    () =>
+      data?.createdAt
+        ? formatDistanceToNowStrict(new Date(data.createdAt))
+        : null,
+    [data?.createdAt]
+  );
 
-    return formatDistanceToNowStrict(new Date(data.createdAt));
-  }, [data?.createdAt]);
-
-  const LikeIcon = hasLiked ? AiFillHeart : AiOutlineHeart;
+  const likeCount = data.likedIds?.length || 0;
+  const commentCount = data.comments?.length || 0;
 
   return (
-    <div
+    <article
       onClick={goToPost}
-      className="border-b border-neutral-800 p-5 cursor-pointer hover:bg-neutral-900 transition"
+      className="
+        group relative cursor-pointer border-b border-line
+        px-4 py-4 sm:px-6
+        transition hover:bg-surface-muted
+      "
     >
-      <div className="flex flex-row items-start gap-3">
+      <div className="flex items-start gap-3">
         <Avatar userId={data.user.id} />
-        <div>
-          <div className="flex flex-row items-center gap-2">
-            <p
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-[14px]">
+            <button
               onClick={goToUser}
-              className="text-white font-semibold cursor-pointer hover:underline"
+              className="truncate font-semibold text-ink hover:underline"
             >
               {data.user.name}
-            </p>
-            <span
+            </button>
+            <button
               onClick={goToUser}
-              className="text-neutral-500 cursor-pointer hover:underline hidden md:block"
+              className="hidden truncate text-ink-soft hover:underline sm:inline"
             >
               @{data.user.username}
-            </span>
-            <span className="text-neutral-500 text-sm">{createdAt}</span>
+            </button>
+            <span className="text-ink-faint">·</span>
+            <span className="text-ink-soft">{createdAt}</span>
           </div>
-          <div className="text-white mt-1">{data.body}</div>
-          <div className="flex flex-row items-center mt-3 gap-10">
-            <div className="flex flex-row items-center text-neutral-500 gap-2 cursor-pointer transition hover:text-sky-500">
-              <AiOutlineMessage size={20} />
-              <p>{data.comments?.length || 0}</p>
-            </div>
-            <div
+
+          <p className="mt-1 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-ink">
+            {data.body}
+          </p>
+
+          <div className="mt-3 flex items-center gap-1 text-ink-soft">
+            <ActionButton
+              label={formatCount(commentCount)}
+              hoverTone="brand"
+              icon={<HiOutlineChatBubbleOvalLeft size={18} />}
+            />
+            <ActionButton
+              hoverTone="mint"
+              icon={<HiOutlineArrowPathRoundedSquare size={18} />}
+            />
+            <ActionButton
               onClick={onLike}
-              className="flex flex-row items-center text-neutral-500 gap-2 cursor-pointer transition hover:text-red-500"
-            >
-              <LikeIcon size={20} color={hasLiked ? "red" : ""} />
-              <p>{data.likedIds.length || 0}</p>
-            </div>
+              label={formatCount(likeCount)}
+              hoverTone="rose"
+              active={hasLiked}
+              icon={
+                hasLiked ? (
+                  <HiHeart size={18} className="text-accent-rose" />
+                ) : (
+                  <HiOutlineHeart size={18} />
+                )
+              }
+            />
+            <ActionButton
+              hoverTone="brand"
+              icon={<HiOutlinePaperAirplane size={18} />}
+            />
           </div>
         </div>
       </div>
-    </div>
+    </article>
+  );
+};
+
+interface IActionButton {
+  icon: React.ReactNode;
+  label?: string;
+  onClick?: (e: React.MouseEvent) => void;
+  hoverTone?: "brand" | "rose" | "mint";
+  active?: boolean;
+}
+const ActionButton: React.FC<IActionButton> = ({
+  icon,
+  label,
+  onClick,
+  hoverTone = "brand",
+  active,
+}) => {
+  const toneHoverBg =
+    hoverTone === "rose"
+      ? "hover:bg-accent-rose/10 hover:text-accent-rose"
+      : hoverTone === "mint"
+      ? "hover:bg-accent-mint/10 hover:text-accent-mint"
+      : "hover:bg-brand-soft hover:text-brand-700 dark:hover:text-brand-500";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        flex items-center gap-1.5 rounded-full px-2.5 py-1.5
+        text-[13px] font-medium transition
+        ${toneHoverBg}
+        ${active ? "text-accent-rose" : ""}
+      `}
+    >
+      {icon}
+      {label ? <span className="tabular-nums">{label}</span> : null}
+    </button>
   );
 };
 
